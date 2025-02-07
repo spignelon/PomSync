@@ -118,5 +118,5 @@ A Flask-based synchronized Pomodoro timer that allows multiple users to join the
 Feel free to open issues or submit pull requests to improve this project!
 
 ## License
-This project is licensed under the MIT License.
+This project is licensed under the GPL-2.0 license.
 
