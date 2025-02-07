@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync Pomodoro Timer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 400px;
+            margin: 50px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .timer {
+            font-size: 40px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .status {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #555;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .start { background: #28a745; color: white; }
+        .reset { background: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Sync Pomodoro Timer</h1>
+        <p class="status">Waiting for session...</p>
+        <div class="timer">00:00</div>
+
+        <button class="start" onclick="startSession('25-5')">Start 25-5</button>
+        <button class="start" onclick="startSession('50-10')">Start 50-10</button>
+        <button class="reset" onclick="resetSession()">Reset Session</button>
+    </div>
+
+    <audio id="startSound" src="https://www.fesliyanstudios.com/play-mp3/4381"></audio>
+    <audio id="endSound" src="https://www.fesliyanstudios.com/play-mp3/4382"></audio>
+
+    <script>
+        const apiUrl = "http://127.0.0.1:5000";
+        let lastPhase = "";
+
+        async function startSession(mode) {
+            try {
+                await fetch(`${apiUrl}/start`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ mode })
+                });
+            } catch (error) {
+                console.error("Error starting session:", error);
+                alert("Failed to start session.");
+            }
+        }
+
+        async function resetSession() {
+            try {
+                await fetch(`${apiUrl}/reset`, { method: "POST" });
+            } catch (error) {
+                console.error("Error resetting session:", error);
+            }
+        }
+
+        async function updateStatus() {
+            try {
+                const response = await fetch(`${apiUrl}/status`);
+                const data = await response.json();
+
+                if (!data.active) {
+                    document.querySelector(".status").innerText = "No active session.";
+                    document.querySelector(".timer").innerText = "00:00";
+                    return;
+                }
+
+                let minutes = Math.floor(data.remaining_time / 60);
+                let seconds = data.remaining_time % 60;
+
+                document.querySelector(".timer").innerText = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                document.querySelector(".status").innerText = `Current Phase: ${data.phase.toUpperCase()}`;
+
+                // Play sound when phase changes
+                if (lastPhase && lastPhase !== data.phase) {
+                    if (data.phase === "work") document.getElementById("startSound").play();
+                    else document.getElementById("endSound").play();
+                }
+
+                lastPhase = data.phase;
+            } catch (error) {
+                console.warn("Error fetching status:", error);
+            }
+        }
+
+        setInterval(updateStatus, 1000);
+    </script>
+
+</body>
+</html>
+
