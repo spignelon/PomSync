@@ -1,15 +1,15 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import time
 import threading
 import json
 import os
 
-app = Flask(__name__)
-CORS(app)  # ✅ Allow frontend access
+app = Flask(__name__, static_folder="static", template_folder="templates")
+CORS(app)  # Allow frontend access
 
 # File to store session data
-SESSION_FILE = "pomodoro_session.json"
+SESSION_FILE = "session.json"
 
 # Default Pomodoro state
 DEFAULT_SESSION = {
@@ -17,7 +17,7 @@ DEFAULT_SESSION = {
     "start_time": None,
     "work_duration": 0,
     "break_duration": 0,
-    "phase": "work"  # Can be "work" or "break"
+    "phase": "work"
 }
 
 
@@ -52,12 +52,18 @@ def update_session():
                 session["start_time"] = time.time()  # Reset timer for new phase
                 save_session(session)
 
-        time.sleep(1)  # ✅ Sync every second
+        time.sleep(1)  # Sync every second
+
+
+@app.route("/")
+def index():
+    """Serve the main webpage."""
+    return render_template("index.html")
 
 
 @app.route("/start", methods=["POST"])
 def start_session():
-    """Starts a Pomodoro session and saves it to the file."""
+    """Starts a Pomodoro session."""
     data = request.json
     mode = data.get("mode", "25-5")
 
@@ -111,4 +117,3 @@ if __name__ == "__main__":
     thread.start()
 
     app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
-
