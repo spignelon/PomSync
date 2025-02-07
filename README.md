@@ -20,8 +20,8 @@ A Flask-based synchronized Pomodoro timer that allows multiple users to join the
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/spignelon/sync-pomodoro-timer.git
-   cd sync-pomodoro-timer
+   git clone https://github.com/spignelon/PomSync.git
+   cd PomSync
    ```
 2. **Create a Virtual Environment**
    ```bash
@@ -71,8 +71,8 @@ A Flask-based synchronized Pomodoro timer that allows multiple users to join the
    ```
 3. **Clone the Repo & Set Up Virtual Env**
    ```bash
-   git clone https://github.com/spignelon/sync-pomodoro-timer.git
-   cd sync-pomodoro-timer
+   git clone https://github.com/spignelon/PomSync.git
+   cd PomSync
    python3 -m venv venv
    source venv/bin/activate
    pip install -r requirements.txt
