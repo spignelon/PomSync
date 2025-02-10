@@ -6,56 +6,86 @@
   <title>PomSync</title>
   <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
   <style>
-      body {
-          font-family: Arial, sans-serif;
-          text-align: center;
-          background-color: #f4f4f4;
-          margin: 0;
-          padding: 0;
-      }
-      .container {
-          max-width: 400px;
-          margin: 50px auto;
-          background: white;
-          padding: 20px;
-          border-radius: 10px;
-          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      }
-      h1 {
-          color: #333;
-      }
-      .timer {
-          font-size: 40px;
-          font-weight: bold;
-          margin: 20px 0;
-      }
-      .status {
-          font-size: 20px;
-          margin-bottom: 20px;
-          color: #555;
-      }
-      button {
-          padding: 10px 15px;
-          margin: 5px;
-          border: none;
-          cursor: pointer;
-          border-radius: 5px;
-          font-size: 16px;
-      }
-      .start { background: #28a745; color: white; }
-      .reset { background: #dc3545; color: white; }
+    /* Default (Light Mode) Variables */
+    :root {
+      --bg-color: #f4f4f4;
+      --text-color: #333;
+      --container-bg: #ffffff;
+      --box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      --status-color: #555;
+    }
+    /* Dark Mode Variables */
+    .dark-mode {
+      --bg-color: #121212;
+      --text-color: #e0e0e0;
+      --container-bg: #1e1e1e;
+      --box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      --status-color: #ccc;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 400px;
+      margin: 50px auto;
+      background: var(--container-bg);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: var(--box-shadow);
+    }
+    h1 {
+      color: var(--text-color);
+    }
+    .timer {
+      font-size: 40px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .status {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: var(--status-color);
+    }
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    .start { background: #28a745; color: white; }
+    .reset { background: #dc3545; color: white; }
+    /* Toggle button styles */
+    #toggleTheme {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
+  <!-- Toggle Theme Button -->
+  <button id="toggleTheme">Toggle Theme</button>
 
   <div class="container">
-      <h1>Sync Pomodoro Timer</h1>
-      <p class="status">Waiting for session...</p>
-      <div class="timer">00:00</div>
+    <h1>Sync Pomodoro Timer</h1>
+    <p class="status">Waiting for session...</p>
+    <div class="timer">00:00</div>
 
-      <button class="start" onclick="startSession('25-5')">Start 25-5</button>
-      <button class="start" onclick="startSession('50-10')">Start 50-10</button>
-      <button class="reset" onclick="resetSession()">Reset Session</button>
+    <button class="start" onclick="startSession('25-5')">Start 25-5</button>
+    <button class="start" onclick="startSession('50-10')">Start 50-10</button>
+    <button class="reset" onclick="resetSession()">Reset Session</button>
   </div>
 
   <!-- Reference the local audio files stored in the static folder -->
@@ -63,78 +93,94 @@
   <audio id="endSound" src="/static/beep-6-96243.mp3"></audio>
 
   <script>
-      // When deployed, apiUrl should be empty (relative paths are used).
-      const apiUrl = "";
-      
-      // Use null as the initial value so that the very first poll can detect a phase change.
-      let lastPhase = null;
+    // API URL remains relative for deployed environments
+    const apiUrl = "";
+    let lastPhase = null;
 
-      async function startSession(mode) {
-          try {
-              await fetch(`${apiUrl}/start`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ mode })
-              });
-              document.title = "PomSync - Active Session";
-          } catch (error) {
-              console.error("Error starting session:", error);
-              alert("Failed to start session.");
-          }
+    async function startSession(mode) {
+      try {
+        await fetch(`${apiUrl}/start`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode })
+        });
+        document.title = "PomSync - Active Session";
+      } catch (error) {
+        console.error("Error starting session:", error);
+        alert("Failed to start session.");
       }
+    }
 
-      async function resetSession() {
-          try {
-              await fetch(`${apiUrl}/reset`, { method: "POST" });
-              document.title = "PomSync";
-          } catch (error) {
-              console.error("Error resetting session:", error);
-          }
+    async function resetSession() {
+      try {
+        await fetch(`${apiUrl}/reset`, { method: "POST" });
+        document.title = "PomSync";
+      } catch (error) {
+        console.error("Error resetting session:", error);
       }
+    }
 
-      async function updateStatus() {
-          try {
-              const response = await fetch(`${apiUrl}/status`);
-              const data = await response.json();
+    async function updateStatus() {
+      try {
+        const response = await fetch(`${apiUrl}/status`);
+        const data = await response.json();
 
-              if (!data.active) {
-                  document.querySelector(".status").innerText = "No active session.";
-                  document.querySelector(".timer").innerText = "00:00";
-                  document.title = "PomSync";
-                  lastPhase = null; // reset lastPhase when no active session
-                  return;
-              }
+        if (!data.active) {
+          document.querySelector(".status").innerText = "No active session.";
+          document.querySelector(".timer").innerText = "00:00";
+          document.title = "PomSync";
+          lastPhase = null;
+          return;
+        }
 
-              // Update page title for active session
-              document.title = "PomSync - Active Session";
+        document.title = "PomSync - Active Session";
+        let minutes = Math.floor(data.remaining_time / 60);
+        let seconds = data.remaining_time % 60;
+        document.querySelector(".timer").innerText = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        document.querySelector(".status").innerText = `Current Phase: ${data.phase.toUpperCase()}`;
 
-              let minutes = Math.floor(data.remaining_time / 60);
-              let seconds = data.remaining_time % 60;
-              document.querySelector(".timer").innerText = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-              document.querySelector(".status").innerText = `Current Phase: ${data.phase.toUpperCase()}`;
-
-              // Check for phase changes (including the initial state when lastPhase is null)
-              if (lastPhase === null) {
-                  // First poll after session becomes active: if the current phase is work, play start sound.
-                  if (data.phase === "work") {
-                      document.getElementById("startSound").play();
-                  }
-              } else if (lastPhase !== data.phase) {
-                  // On a phase change, play start sound if entering work phase, otherwise play end sound.
-                  if (data.phase === "work") {
-                      document.getElementById("startSound").play();
-                  } else {
-                      document.getElementById("endSound").play();
-                  }
-              }
-
-              lastPhase = data.phase;
-          } catch (error) {
-              console.warn("Error fetching status:", error);
+        if (lastPhase === null) {
+          if (data.phase === "work") {
+            document.getElementById("startSound").play();
           }
+        } else if (lastPhase !== data.phase) {
+          if (data.phase === "work") {
+            document.getElementById("startSound").play();
+          } else {
+            document.getElementById("endSound").play();
+          }
+        }
+        lastPhase = data.phase;
+      } catch (error) {
+        console.warn("Error fetching status:", error);
       }
+    }
 
-      setInterval(updateStatus, 1000);
+    setInterval(updateStatus, 1000);
+
+    /* Theme Toggle Code */
+    function setTheme(theme) {
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark-mode");
+      } else {
+        document.documentElement.classList.remove("dark-mode");
+      }
+      localStorage.setItem("theme", theme);
+    }
+
+    function toggleTheme() {
+      let currentTheme = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      setTheme(currentTheme === "dark" ? "light" : "dark");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      let storedTheme = localStorage.getItem("theme");
+      if (!storedTheme) {
+        storedTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      setTheme(storedTheme);
+      document.getElementById("toggleTheme").addEventListener("click", toggleTheme);
+    });
   </script>
 </body>
 </html>
